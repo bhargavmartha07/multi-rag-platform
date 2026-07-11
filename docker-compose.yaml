@@ -1,0 +1,182 @@
+services:
+
+  api:
+    build: ./api
+    container_name: rag-api
+
+    ports:
+      - "8000:8000"
+
+    env_file:
+      - .env
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+      qdrant:
+        condition: service_started
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  worker:
+
+    build: ./worker
+
+    container_name: rag-worker
+
+    env_file:
+      - .env
+
+    depends_on:
+
+      db:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.celery_app inspect ping --timeout 5 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  db:
+
+    image: postgres:15
+
+    container_name: rag-db
+
+    environment:
+
+      POSTGRES_USER: ${POSTGRES_USER}
+
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+
+      - "5432:5432"
+
+    volumes:
+
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+
+      interval: 10s
+
+      timeout: 5s
+
+      retries: 5
+
+  redis:
+
+    image: redis:7
+
+    container_name: rag-redis
+
+    ports:
+
+      - "6379:6379"
+
+    healthcheck:
+
+      test: ["CMD", "redis-cli", "ping"]
+
+      interval: 10s
+
+      timeout: 5s
+
+      retries: 5
+
+  qdrant:
+
+    image: qdrant/qdrant:v1.7.4
+
+    container_name: rag-qdrant
+
+    ports:
+
+      - "6333:6333"
+
+    volumes:
+
+      - qdrant_data:/qdrant/storage
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:6333/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  prometheus:
+
+    image: prom/prometheus:v2.47.2
+
+    container_name: rag-prometheus
+
+    ports:
+
+      - "9090:9090"
+
+    volumes:
+
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  grafana:
+
+    image: grafana/grafana:10.1.5
+
+    container_name: rag-grafana
+
+    ports:
+
+      - "3000:3000"
+
+    volumes:
+
+      - ./grafana/provisioning:/etc/grafana/provisioning
+
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+
+  postgres_data:
+
+  qdrant_data:
