@@ -11,22 +11,34 @@ from qdrant_client.models import (
     VectorParams,
 )
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 COLLECTION_NAME = "rag_documents"
-VECTOR_SIZE = 1536
 
 
 class VectorService:
 
     def __init__(self) -> None:
 
-        qdrant_url = os.environ.get(
-            "QDRANT_URL",
-            "http://qdrant:6333",
+        self.qdrant_url = settings.QDRANT_URL
+
+        self.vector_size = (
+            settings.EMBEDDING_DIMENSIONS
+            if settings.EMBEDDING_PROVIDER == "ollama"
+            else settings.OPENAI_EMBEDDING_DIMENSIONS
         )
 
-        self.client = QdrantClient(url=qdrant_url)
+        self.client = QdrantClient(
+            url=self.qdrant_url
+        )
+
+        logger.info(
+            "VectorService: url=%s vector_size=%d",
+            self.qdrant_url,
+            self.vector_size,
+        )
 
     def ensure_collection(self) -> None:
 
@@ -41,14 +53,15 @@ class VectorService:
             self.client.create_collection(
                 collection_name=COLLECTION_NAME,
                 vectors_config=VectorParams(
-                    size=VECTOR_SIZE,
+                    size=self.vector_size,
                     distance=Distance.COSINE,
                 ),
             )
 
             logger.info(
-                "Created Qdrant collection: %s",
+                "Created Qdrant collection: %s (size=%d)",
                 COLLECTION_NAME,
+                self.vector_size,
             )
 
     def upsert_vectors(
@@ -144,7 +157,6 @@ class VectorService:
     ) -> None:
 
         from qdrant_client.models import (
-            PointsSelector,
             PointIdsList,
         )
 

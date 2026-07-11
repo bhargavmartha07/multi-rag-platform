@@ -1,8 +1,8 @@
 import logging
-import os
 
 from openai import OpenAI
 
+from app.core.config import settings
 from app.schemas.query import (
     QueryResponse,
     SourceDocument,
@@ -19,18 +19,38 @@ from app.services.vector_service import (
 
 logger = logging.getLogger(__name__)
 
-LLM_MODEL = "gpt-3.5-turbo"
-
 
 class QueryService:
 
     def __init__(self) -> None:
 
-        api_key = os.environ.get(
-            "OPENAI_API_KEY", ""
-        )
+        if settings.LLM_PROVIDER == "groq":
 
-        self.llm_client = OpenAI(api_key=api_key)
+            self.llm_client = OpenAI(
+                api_key=settings.GROQ_API_KEY,
+                base_url=settings.GROQ_BASE_URL,
+            )
+
+        elif settings.LLM_PROVIDER == "ollama":
+
+            self.llm_client = OpenAI(
+                api_key="ollama",
+                base_url=settings.OLLAMA_BASE_URL,
+            )
+
+        else:
+
+            self.llm_client = OpenAI(
+                api_key=settings.OPENAI_API_KEY,
+            )
+
+        self.llm_model = settings.LLM_MODEL
+
+        logger.info(
+            "LLM provider=%s model=%s",
+            settings.LLM_PROVIDER,
+            self.llm_model,
+        )
 
     def query(
         self,
@@ -122,7 +142,7 @@ class QueryService:
 
             response = (
                 self.llm_client.chat.completions.create(
-                    model=LLM_MODEL,
+                    model=self.llm_model,
                     messages=[
                         {
                             "role": "system",

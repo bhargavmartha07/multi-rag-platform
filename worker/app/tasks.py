@@ -19,6 +19,28 @@ QDRANT_URL = os.environ.get(
     "http://qdrant:6333",
 )
 
+EMBEDDING_PROVIDER = os.environ.get(
+    "EMBEDDING_PROVIDER",
+    "ollama",
+)
+
+OLLAMA_BASE_URL = os.environ.get(
+    "OLLAMA_BASE_URL",
+    "http://host.docker.internal:11434/v1",
+)
+
+EMBEDDING_MODEL = os.environ.get(
+    "EMBEDDING_MODEL",
+    "nomic-embed-text",
+)
+
+EMBEDDING_DIMENSIONS = int(
+    os.environ.get(
+        "EMBEDDING_DIMENSIONS",
+        "768",
+    )
+)
+
 COLLECTION_NAME = "rag_documents"
 
 engine = create_engine(
@@ -53,14 +75,15 @@ def _ensure_collection():
         client.create_collection(
             collection_name=COLLECTION_NAME,
             vectors_config=VectorParams(
-                size=1536,
+                size=EMBEDDING_DIMENSIONS,
                 distance=Distance.COSINE,
             ),
         )
 
         logger.info(
-            "Created Qdrant collection: %s",
+            "Created Qdrant collection: %s (size=%d)",
             COLLECTION_NAME,
+            EMBEDDING_DIMENSIONS,
         )
 
     client.close()
@@ -107,9 +130,18 @@ def _generate_embeddings(
 
     from openai import OpenAI
 
-    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if EMBEDDING_PROVIDER == "ollama":
 
-    client = OpenAI(api_key=api_key)
+        client = OpenAI(
+            api_key="ollama",
+            base_url=OLLAMA_BASE_URL,
+        )
+
+    else:
+
+        api_key = os.environ.get("OPENAI_API_KEY", "")
+
+        client = OpenAI(api_key=api_key)
 
     batch_size = 20
 
@@ -120,7 +152,7 @@ def _generate_embeddings(
         batch = texts[i : i + batch_size]
 
         response = client.embeddings.create(
-            model="text-embedding-3-small",
+            model=EMBEDDING_MODEL,
             input=batch,
         )
 

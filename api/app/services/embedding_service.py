@@ -1,23 +1,49 @@
 import logging
-import os
 
 from openai import OpenAI
 
-logger = logging.getLogger(__name__)
+from app.core.config import settings
 
-EMBEDDING_MODEL = "text-embedding-3-small"
-EMBEDDING_DIMENSIONS = 1536
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingService:
 
     def __init__(self) -> None:
 
-        api_key = os.environ.get(
-            "OPENAI_API_KEY", ""
-        )
+        if settings.EMBEDDING_PROVIDER == "ollama":
 
-        self.client = OpenAI(api_key=api_key)
+            self.client = OpenAI(
+                api_key="ollama",
+                base_url=settings.OLLAMA_BASE_URL,
+            )
+
+            self.model = settings.EMBEDDING_MODEL
+
+            self.dimensions = (
+                settings.EMBEDDING_DIMENSIONS
+            )
+
+        else:
+
+            self.client = OpenAI(
+                api_key=settings.OPENAI_API_KEY,
+            )
+
+            self.model = (
+                settings.OPENAI_EMBEDDING_MODEL
+            )
+
+            self.dimensions = (
+                settings.OPENAI_EMBEDDING_DIMENSIONS
+            )
+
+        logger.info(
+            "Embedding provider=%s model=%s dims=%d",
+            settings.EMBEDDING_PROVIDER,
+            self.model,
+            self.dimensions,
+        )
 
     def generate_embeddings(
         self,
@@ -35,7 +61,7 @@ class EmbeddingService:
 
                 response = (
                     self.client.embeddings.create(
-                        model=EMBEDDING_MODEL,
+                        model=self.model,
                         input=batch,
                     )
                 )

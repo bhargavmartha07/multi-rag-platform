@@ -21,7 +21,27 @@ class Settings(BaseSettings):
 
     QDRANT_URL: str
 
-    OPENAI_API_KEY: str
+    LLM_PROVIDER: str = "ollama"
+
+    OPENAI_API_KEY: str = "sk-placeholder"
+
+    GROQ_API_KEY: str = ""
+
+    GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
+
+    OLLAMA_BASE_URL: str = "http://host.docker.internal:11434/v1"
+
+    LLM_MODEL: str = "llama3.2"
+
+    EMBEDDING_PROVIDER: str = "ollama"
+
+    EMBEDDING_MODEL: str = "nomic-embed-text"
+
+    EMBEDDING_DIMENSIONS: int = 768
+
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+
+    OPENAI_EMBEDDING_DIMENSIONS: int = 1536
 
     model_config = SettingsConfigDict(
         env_file=".env",
