@@ -35,23 +35,6 @@ ACTIVE_REQUESTS = Gauge(
     "Number of active HTTP requests",
 )
 
-RAG_QUERY_COUNT = Counter(
-    "rag_query_total",
-    "Total RAG queries processed",
-    ["tenant_id"],
-)
-
-RAG_TOKENS_USED = Counter(
-    "rag_query_tokens_used_total",
-    "Total LLM tokens used in RAG queries",
-)
-
-DOCUMENT_UPLOAD_COUNT = Counter(
-    "document_uploads_total",
-    "Total document uploads",
-    ["tenant_id"],
-)
-
 
 class MetricsMiddleware(BaseHTTPMiddleware):
 

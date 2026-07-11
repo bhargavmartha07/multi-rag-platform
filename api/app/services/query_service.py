@@ -1,6 +1,7 @@
 import logging
 
 from openai import OpenAI
+from prometheus_client import Counter
 
 from app.core.config import settings
 from app.schemas.query import (
@@ -15,6 +16,17 @@ from app.services.embedding_service import (
 )
 from app.services.vector_service import (
     vector_service,
+)
+
+RAG_QUERY_COUNT = Counter(
+    "rag_query_total",
+    "Total RAG queries processed",
+    ["tenant_id"],
+)
+
+RAG_TOKENS_USED = Counter(
+    "rag_query_tokens_used_total",
+    "Total LLM tokens used in RAG queries",
 )
 
 logger = logging.getLogger(__name__)
@@ -57,6 +69,10 @@ class QueryService:
         query_text: str,
         tenant_id: str,
     ) -> tuple[QueryResponse, bool]:
+
+        RAG_QUERY_COUNT.labels(
+            tenant_id=tenant_id,
+        ).inc()
 
         cached = cache_service.get_cached_response(
             tenant_id,
@@ -171,6 +187,8 @@ class QueryService:
                 if response.usage
                 else 0
             )
+
+            RAG_TOKENS_USED.inc(tokens_used)
 
             logger.info(
                 "Query processed: tokens=%d results=%d",

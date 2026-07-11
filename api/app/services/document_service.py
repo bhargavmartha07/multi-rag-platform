@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import UploadFile
+from prometheus_client import Counter
 from sqlalchemy.orm import Session
 
 from app.core.celery_client import celery_client
@@ -16,6 +17,12 @@ from app.schemas.document import (
 )
 
 logger = logging.getLogger(__name__)
+
+DOCUMENT_UPLOAD_COUNT = Counter(
+    "document_uploads_total",
+    "Total document uploads",
+    ["tenant_id"],
+)
 
 
 class DocumentService:
@@ -51,6 +58,10 @@ class DocumentService:
             db,
             document,
         )
+
+        DOCUMENT_UPLOAD_COUNT.labels(
+            tenant_id=tenant_id,
+        ).inc()
 
         logger.info(
             "Document uploaded: id=%d tenant=%s filename=%s",
