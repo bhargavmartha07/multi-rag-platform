@@ -10,6 +10,9 @@ services:
     env_file:
       - .env
 
+    volumes:
+      - uploads_data:/app/uploads
+
     depends_on:
       db:
         condition: service_healthy
@@ -35,6 +38,9 @@ services:
 
     env_file:
       - .env
+
+    volumes:
+      - uploads_data:/app/uploads
 
     depends_on:
 
@@ -109,7 +115,7 @@ services:
 
   qdrant:
 
-    image: qdrant/qdrant:v1.7.4
+    image: qdrant/qdrant:v1.13.2
 
     container_name: rag-qdrant
 
@@ -180,3 +186,5 @@ volumes:
   postgres_data:
 
   qdrant_data:
+
+  uploads_data:

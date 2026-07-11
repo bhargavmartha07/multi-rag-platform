@@ -19,12 +19,13 @@ class StorageService:
 
     def __init__(self) -> None:
 
-        self.upload_dir = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",
-            "..",
-            "uploads",
+        self.upload_dir = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "uploads",
+            )
         )
 
         os.makedirs(

@@ -13,7 +13,3 @@ celery_client.conf.update(
     timezone="UTC",
     enable_utc=True,
 )
-
-celery_client.conf.task_routes = {
-    "app.tasks.*": {"queue": "default"},
-}

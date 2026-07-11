@@ -1,7 +1,6 @@
 celery
 redis
 qdrant-client
-sentence-transformers
 pypdf
 python-dotenv
 sqlalchemy

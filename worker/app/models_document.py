@@ -2,7 +2,6 @@ from datetime import datetime
 
 from sqlalchemy import (
     DateTime,
-    ForeignKey,
     Integer,
     String,
     Text,
@@ -34,7 +33,7 @@ class Document(Base):
     )
 
     owner_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"),
+        Integer,
         nullable=False,
     )
 

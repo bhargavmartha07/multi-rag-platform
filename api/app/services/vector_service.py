@@ -115,9 +115,9 @@ class VectorService:
 
         self.ensure_collection()
 
-        results = self.client.search(
+        results = self.client.query_points(
             collection_name=COLLECTION_NAME,
-            query_vector=query_embedding,
+            query=query_embedding,
             query_filter=Filter(
                 must=[
                     FieldCondition(
@@ -133,7 +133,7 @@ class VectorService:
 
         formatted_results = []
 
-        for result in results:
+        for result in results.points:
 
             formatted_results.append(
                 {

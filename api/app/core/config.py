@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     OLLAMA_BASE_URL: str = "http://host.docker.internal:11434/v1"
 
-    LLM_MODEL: str = "llama3.2"
+    LLM_MODEL: str = "llama3.2:3b"
 
     EMBEDDING_PROVIDER: str = "ollama"
 
